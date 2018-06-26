@@ -55,8 +55,9 @@ def bed_separator(bedfile):
 
 
 def which_read(flag):
-    """(int) -> str
-    Returns read number based on flag.
+    """
+    :param flag(number): the line of read, eg. 99
+    :return: paired sequence reads, either 1 or 2
 
     Test cases:
     >>> which_read(83)
@@ -66,19 +67,13 @@ def which_read(flag):
     >>> which_read(177)
     'R2'
     """
-    read1 = [99, 83, 67, 115, 81, 97, 65, 113]
-    read2 = [147, 163, 131, 179, 161, 145, 129, 177]
 
-    if flag in read1:
-        read = 'R1'
-    elif flag in read2:
-        read = 'R2'
+    if flag in [99, 83, 67, 115, 81, 97, 65, 113]:
+        return "R1"
+    elif flag in [147, 163, 131, 179, 161, 145, 129, 177]:
+        return "R2"
     else:
-        print('UNMAPPED READ ERROR')
-        print(flag)
-        read = None
-
-    return read
+        raise Exception("UNMAPPED READ ERROR")
 
 
 def which_strand(read):
@@ -132,33 +127,26 @@ def which_strand(read):
     Flag = 81 -> 'neg'
     """
     # Flags indicating strand direction
-    pos = [99, 147, 67, 131]
-    neg = [83, 163, 115, 179]
-    no_ori = [65, 129, 113, 177, 81, 161, 97, 145]  # direction not defined
-
-    if read.flag in pos:
+    if read.flag in [99, 147, 67, 131]:
         strand = 'pos'
-    elif read.flag in neg:
+    elif read.flag in [83, 163, 115, 179]:
         strand = 'neg'
-    elif read.flag in no_ori:
-        # Determine orientation of flags with no defined direction using order of chr coor
-        if (read.reference_id < read.next_reference_id and which_read(read.flag) == 'R1') or \
-                (read.reference_id > read.next_reference_id and which_read(read.flag) == 'R2') or \
-                (read.reference_id == read.next_reference_id and which_read(read.flag) == 'R1' and
-                         read.reference_start < read.next_reference_start) or \
-                (read.reference_id == read.next_reference_id and which_read(read.flag) == 'R2' and
-                         read.reference_start > read.next_reference_start):
-            strand = 'pos'
-        else:
-            strand = 'neg'
-    else:
-        # Only uniquely mapped reads (with flags indicated above) should be retained, as 'bad reads' were filtered out
-        # in a previous step
-        print('STRAND ERROR')
-        print(read.flag)
-        strand = None
-
-    return strand
+    elif read.flag in [65, 129, 113, 177, 81, 161, 97, 145]:
+        try:
+            # Determine orientation of flags with no defined direction using order of chr coor
+            if (read.reference_id < read.next_reference_id and which_read(read.flag) == 'R1') or \
+                    (read.reference_id > read.next_reference_id and which_read(read.flag) == 'R2') or \
+                    (read.reference_id == read.next_reference_id and which_read(read.flag) == 'R1' and
+                             read.reference_start < read.next_reference_start) or \
+                    (read.reference_id == read.next_reference_id and which_read(read.flag) == 'R2' and
+                             read.reference_start > read.next_reference_start):
+                strand = 'pos'
+            else:
+                strand = 'neg'
+            return  strand
+        except Exception as e:
+            print (e.message)
+            return None
 
 
 def cigar_order(read, mate):
